@@ -8,6 +8,10 @@ on:
 jobs:
   send_notification_to_teams:
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+
     name: Send Notification to Teams
     steps:
       - name: Checkout code
@@ -17,3 +21,4 @@ jobs:
         uses: ./.github/actions/ms-notify
         with:
           webhook-url: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          github-token: ${{ github.token }}

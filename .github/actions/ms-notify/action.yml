@@ -4,13 +4,128 @@ inputs:
   webhook-url:
     description: 'Webhook URL to send the JSON payload'
     required: true
+  github-token:
+    description: 'GitHub token'
+    required: true
 runs:
   using: "composite"
   steps:
+    - name: Get commit details
+      id: commit
+      run: |
+        commit_message=$(gh api repos/${{ github.repository }}/commits/${{ github.sha }} --jq .commit.message)
+        echo "message=$commit_message" >> $GITHUB_OUTPUT
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+
     - name: Send JSON Payload to Teams
+      env:
+        GITHUB_WORKFLOW: ${{ github.workflow }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        GITHUB_JOB: ${{ github.job }}
+        GITHUB_SHA: ${{ github.sha }}
+        GITHUB_REF: ${{ github.ref }}
+        GITHUB_ACTOR: ${{ github.actor }}
+        GITHUB_RUN_ID: ${{ github.run_id }}
+        COMMIT_MESSAGE: ${{ steps.commit.outputs.message }}
       run: |
         curl -H "Content-Type: application/json" \
              -X POST \
-             -d @.github/actions/ms-notify/post.json \
+             -d '{
+          "@type": "MessageCard",
+          "@context": "http://schema.org/extensions",
+          "themeColor": "0076D7",
+          "summary": "GitHub Action Notification",
+          "sections": [{
+              "activityTitle": "GitHub Action: '"$GITHUB_WORKFLOW"'",
+              "activitySubtitle": "Repository: '"$GITHUB_REPOSITORY"'",
+              "activityImage": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+              "facts": [{
+                  "name": "Job Status",
+                  "value": "${{ job.status }}"
+              }, {
+                  "name": "Workflow",
+                  "value": "'"$GITHUB_WORKFLOW"'"
+              }, {
+                  "name": "Job",
+                  "value": "'"$GITHUB_JOB"'"
+              }, {
+                  "name": "Repository",
+                  "value": "'"$GITHUB_REPOSITORY"'"
+              }, {
+                  "name": "Commit",
+                  "value": "'"$GITHUB_SHA"'"
+              }, {
+                  "name": "Commit Message",
+                  "value": "'"$COMMIT_MESSAGE"'"
+              }, {
+                  "name": "Branch",
+                  "value": "'"$GITHUB_REF"'"
+              }, {
+                  "name": "Triggered by",
+                  "value": "'"$GITHUB_ACTOR"'"
+              }],
+              "markdown": true
+          }],
+          "potentialAction": [{
+              "@type": "OpenUri",
+              "name": "View Commit",
+              "targets": [{
+                  "os": "default",
+                  "uri": "https://github.com/'"$GITHUB_REPOSITORY"'/commit/'"$GITHUB_SHA"'"
+              }]
+          }, {
+              "@type": "OpenUri",
+              "name": "View Workflow",
+              "targets": [{
+                  "os": "default",
+                  "uri": "https://github.com/'"$GITHUB_REPOSITORY"'/actions/runs/'"$GITHUB_RUN_ID"'"
+              }]
+          }]
+        }' \
+             ${{ inputs.webhook-url }}
+      shell: bash
+
+          }, {
+              "@type": "ActionCard",
+              "name": "Add a comment",
+              "inputs": [{
+                  "@type": "TextInput",
+                  "id": "comment",
+                  "isMultiline": false,
+                  "title": "Add a comment here for this task"
+              }],
+              "actions": [{
+                  "@type": "HttpPOST",
+                  "name": "Add comment",
+                  "target": "https://learn.microsoft.com/outlook/actionable-messages"
+              }]
+          }, {
+              "@type": "ActionCard",
+              "name": "Change status",
+              "inputs": [{
+                  "@type": "MultichoiceInput",
+                  "id": "list",
+                  "title": "Select a status",
+                  "isMultiSelect": "false",
+                  "choices": [{
+                      "display": "In Progress",
+                      "value": "InProgress"
+                  }, {
+                      "display": "Completed",
+                      "value": "Completed"
+                  }, {
+                      "display": "Failed",
+                      "value": "Failed"
+                  }]
+              }],
+              "actions": [{
+                  "@type": "HttpPOST",
+                  "name": "Save",
+                  "target": "https://learn.microsoft.com/outlook/actionable-messages"
+              }]
+          }]
+        }' \
              ${{ inputs.webhook-url }}
       shell: bash
