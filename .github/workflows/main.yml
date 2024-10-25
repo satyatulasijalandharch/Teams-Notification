@@ -6,6 +6,8 @@ jobs:
     name: A job to say hello
     steps:
       - uses: actions/checkout@v4
+      - name: Make scripts executable
+        run: chmod +x goodbye.sh
       - id: foo
         uses: satyatulasijalandharch/Teams-Notification@v0.1
         with:
