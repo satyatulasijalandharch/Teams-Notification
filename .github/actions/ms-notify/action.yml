@@ -10,26 +10,32 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Get commit details
-      id: commit
+    - name: Get run details
+      id: run_details
       run: |
-        commit_message=$(gh api repos/${{ github.repository }}/commits/${{ github.sha }} --jq .commit.message)
-        echo "message=$commit_message" >> $GITHUB_OUTPUT
+        run_data=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }})
+        echo "run_data=$run_data" >> $GITHUB_OUTPUT
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.github-token }}
 
     - name: Send JSON Payload to Teams
       env:
-        GITHUB_WORKFLOW: ${{ github.workflow }}
-        GITHUB_REPOSITORY: ${{ github.repository }}
-        GITHUB_JOB: ${{ github.job }}
-        GITHUB_SHA: ${{ github.sha }}
-        GITHUB_REF: ${{ github.ref }}
-        GITHUB_ACTOR: ${{ github.actor }}
-        GITHUB_RUN_ID: ${{ github.run_id }}
-        COMMIT_MESSAGE: ${{ steps.commit.outputs.message }}
+        RUN_DATA: ${{ steps.run_details.outputs.run_data }}
       run: |
+        # Extract data from RUN_DATA
+        workflow_name=$(echo "$RUN_DATA" | jq -r '.name')
+        run_number=$(echo "$RUN_DATA" | jq -r '.run_number')
+        event=$(echo "$RUN_DATA" | jq -r '.event')
+        status=$(echo "$RUN_DATA" | jq -r '.status')
+        conclusion=$(echo "$RUN_DATA" | jq -r '.conclusion')
+        created_at=$(echo "$RUN_DATA" | jq -r '.created_at')
+        updated_at=$(echo "$RUN_DATA" | jq -r '.updated_at')
+        actor=$(echo "$RUN_DATA" | jq -r '.actor.login')
+        head_commit_message=$(echo "$RUN_DATA" | jq -r '.head_commit.message')
+        head_commit_author=$(echo "$RUN_DATA" | jq -r '.head_commit.author.name')
+        head_commit_timestamp=$(echo "$RUN_DATA" | jq -r '.head_commit.timestamp')
+
         curl -H "Content-Type: application/json" \
              -X POST \
              -d '{
@@ -38,92 +44,48 @@ runs:
           "themeColor": "0076D7",
           "summary": "GitHub Action Notification",
           "sections": [{
-              "activityTitle": "GitHub Action: '"$GITHUB_WORKFLOW"'",
-              "activitySubtitle": "Repository: '"$GITHUB_REPOSITORY"'",
+              "activityTitle": "GitHub Action: '"$workflow_name"'",
+              "activitySubtitle": "Repository: '"${{ github.repository }}"'",
               "activityImage": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
               "facts": [{
-                  "name": "Job Status",
-                  "value": "${{ job.status }}"
+                  "name": "Run Number",
+                  "value": "'"$run_number"'"
               }, {
-                  "name": "Workflow",
-                  "value": "'"$GITHUB_WORKFLOW"'"
+                  "name": "Event",
+                  "value": "'"$event"'"
               }, {
-                  "name": "Job",
-                  "value": "'"$GITHUB_JOB"'"
+                  "name": "Status",
+                  "value": "'"$status"'"
               }, {
-                  "name": "Repository",
-                  "value": "'"$GITHUB_REPOSITORY"'"
+                  "name": "Conclusion",
+                  "value": "'"$conclusion"'"
               }, {
-                  "name": "Commit",
-                  "value": "'"$GITHUB_SHA"'"
+                  "name": "Created At",
+                  "value": "'"$created_at"'"
+              }, {
+                  "name": "Updated At",
+                  "value": "'"$updated_at"'"
+              }, {
+                  "name": "Actor",
+                  "value": "'"$actor"'"
               }, {
                   "name": "Commit Message",
-                  "value": "'"$COMMIT_MESSAGE"'"
+                  "value": "'"$head_commit_message"'"
               }, {
-                  "name": "Branch",
-                  "value": "'"$GITHUB_REF"'"
+                  "name": "Commit Author",
+                  "value": "'"$head_commit_author"'"
               }, {
-                  "name": "Triggered by",
-                  "value": "'"$GITHUB_ACTOR"'"
+                  "name": "Commit Timestamp",
+                  "value": "'"$head_commit_timestamp"'"
               }],
               "markdown": true
           }],
           "potentialAction": [{
               "@type": "OpenUri",
-              "name": "View Commit",
+              "name": "View Run",
               "targets": [{
                   "os": "default",
-                  "uri": "https://github.com/'"$GITHUB_REPOSITORY"'/commit/'"$GITHUB_SHA"'"
-              }]
-          }, {
-              "@type": "OpenUri",
-              "name": "View Workflow",
-              "targets": [{
-                  "os": "default",
-                  "uri": "https://github.com/'"$GITHUB_REPOSITORY"'/actions/runs/'"$GITHUB_RUN_ID"'"
-              }]
-          }]
-        }' \
-             ${{ inputs.webhook-url }}
-      shell: bash
-
-          }, {
-              "@type": "ActionCard",
-              "name": "Add a comment",
-              "inputs": [{
-                  "@type": "TextInput",
-                  "id": "comment",
-                  "isMultiline": false,
-                  "title": "Add a comment here for this task"
-              }],
-              "actions": [{
-                  "@type": "HttpPOST",
-                  "name": "Add comment",
-                  "target": "https://learn.microsoft.com/outlook/actionable-messages"
-              }]
-          }, {
-              "@type": "ActionCard",
-              "name": "Change status",
-              "inputs": [{
-                  "@type": "MultichoiceInput",
-                  "id": "list",
-                  "title": "Select a status",
-                  "isMultiSelect": "false",
-                  "choices": [{
-                      "display": "In Progress",
-                      "value": "InProgress"
-                  }, {
-                      "display": "Completed",
-                      "value": "Completed"
-                  }, {
-                      "display": "Failed",
-                      "value": "Failed"
-                  }]
-              }],
-              "actions": [{
-                  "@type": "HttpPOST",
-                  "name": "Save",
-                  "target": "https://learn.microsoft.com/outlook/actionable-messages"
+                  "uri": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
               }]
           }]
         }' \
