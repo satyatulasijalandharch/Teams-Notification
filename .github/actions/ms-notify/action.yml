@@ -11,6 +11,6 @@ runs:
       run: |
         curl -H "Content-Type: application/json" \
              -X POST \
-             -d @post.json \
+             -d @.github/actions/ms-notify/post.json \
              ${{ inputs.webhook-url }}
       shell: bash
