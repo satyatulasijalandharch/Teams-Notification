@@ -5,14 +5,10 @@ jobs:
     runs-on: ubuntu-latest
     name: A job to say hello
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - id: foo
+      - name: Send Notification to Teams
         uses: satyatulasijalandharch/Teams-Notification@v1.0.1
         with:
-          who-to-greet: 'Mona the Octocat'
-
-      - run: echo random-number "$RANDOM_NUMBER"
-        shell: bash
-        env:
-          RANDOM_NUMBER: ${{ steps.foo.outputs.random-number }}
+          webhook-url: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
