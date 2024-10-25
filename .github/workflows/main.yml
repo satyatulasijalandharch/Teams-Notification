@@ -12,7 +12,7 @@ jobs:
         run: chmod +x ./_actions/satyatulasijalandharch/Teams-Notification/v0.1/goodbye.sh
 
       - id: foo
-        uses: satyatulasijalandharch/Teams-Notification@v0.1
+        uses: satyatulasijalandharch/Teams-Notification@v1
         with:
           who-to-greet: 'Mona the Octocat'
 
