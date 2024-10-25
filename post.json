@@ -2,24 +2,50 @@
     "@type": "MessageCard",
     "@context": "http://schema.org/extensions",
     "themeColor": "0076D7",
-    "summary": "Larry Bryant created a new task",
+    "summary": "GitHub Action Notification",
     "sections": [{
-        "activityTitle": "Larry Bryant created a new task",
-        "activitySubtitle": "On Project Tango",
-        "activityImage": "https://adaptivecards.io/content/cats/3.png",
+        "activityTitle": "GitHub Action: ${{ github.workflow }}",
+        "activitySubtitle": "Repository: ${{ github.repository }}",
+        "activityImage": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
         "facts": [{
-            "name": "Assigned to",
-            "value": "Unassigned"
+            "name": "Job Status",
+            "value": "${{ job.status }}"
         }, {
-            "name": "Due date",
-            "value": "Mon May 01 2017 17:07:18 GMT-0700 (Pacific Daylight Time)"
+            "name": "Workflow",
+            "value": "${{ github.workflow }}"
         }, {
-            "name": "Status",
-            "value": "Not started"
+            "name": "Job",
+            "value": "${{ github.job }}"
+        }, {
+            "name": "Repository",
+            "value": "${{ github.repository }}"
+        }, {
+            "name": "Commit",
+            "value": "${{ github.sha }}"
+        }, {
+            "name": "Branch",
+            "value": "${{ github.ref }}"
+        }, {
+            "name": "Triggered by",
+            "value": "${{ github.actor }}"
         }],
         "markdown": true
     }],
     "potentialAction": [{
+        "@type": "OpenUri",
+        "name": "View Commit",
+        "targets": [{
+            "os": "default",
+            "uri": "https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+        }]
+    }, {
+        "@type": "OpenUri",
+        "name": "View Workflow",
+        "targets": [{
+            "os": "default",
+            "uri": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        }]
+    }, {
         "@type": "ActionCard",
         "name": "Add a comment",
         "inputs": [{
@@ -35,26 +61,6 @@
         }]
     }, {
         "@type": "ActionCard",
-        "name": "Set due date",
-        "inputs": [{
-            "@type": "DateInput",
-            "id": "dueDate",
-            "title": "Enter a due date for this task"
-        }],
-        "actions": [{
-            "@type": "HttpPOST",
-            "name": "Save",
-            "target": "https://learn.microsoft.com/outlook/actionable-messages"
-        }]
-    }, {
-        "@type": "OpenUri",
-        "name": "Learn More",
-        "targets": [{
-            "os": "default",
-            "uri": "https://learn.microsoft.com/outlook/actionable-messages"
-        }]
-    }, {
-        "@type": "ActionCard",
         "name": "Change status",
         "inputs": [{
             "@type": "MultichoiceInput",
@@ -63,13 +69,13 @@
             "isMultiSelect": "false",
             "choices": [{
                 "display": "In Progress",
-                "value": "1"
+                "value": "InProgress"
             }, {
-                "display": "Active",
-                "value": "2"
+                "display": "Completed",
+                "value": "Completed"
             }, {
-                "display": "Closed",
-                "value": "3"
+                "display": "Failed",
+                "value": "Failed"
             }]
         }],
         "actions": [{

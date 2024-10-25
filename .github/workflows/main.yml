@@ -16,6 +16,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Send Notification to Teams
-        uses: satyatulasijalandharch/Teams-Notification@v1.0.1
+        uses: ./action.yml
         with:
           webhook-url: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
