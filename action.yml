@@ -1,5 +1,5 @@
-name: 'Hello World'
-description: 'Greet someone'
+name: 'Send Notification to Teams'
+description: 'Send Notification to Teams'
 inputs:
   webhook-url:
     description: 'Webhook URL to send the JSON payload'
@@ -12,5 +12,5 @@ runs:
         curl -H "Content-Type: application/json" \
              -X POST \
              -d @post.json \
-             ${{ secrets.TEAMS_WEBHOOK_URL }}
+             ${{ inputs.webhook-url }}
       shell: bash
