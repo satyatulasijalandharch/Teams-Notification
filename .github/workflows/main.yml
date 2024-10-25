@@ -7,12 +7,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Grant permissions to the script in the action
-      - name: Set executable permission for goodbye.sh
-        run: chmod +x ./_actions/satyatulasijalandharch/Teams-Notification/v0.1/goodbye.sh
-
       - id: foo
-        uses: satyatulasijalandharch/Teams-Notification@v0.1
+        uses: satyatulasijalandharch/Teams-Notification@v1.0.1
         with:
           who-to-greet: 'Mona the Octocat'
 
